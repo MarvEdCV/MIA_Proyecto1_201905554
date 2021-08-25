@@ -30,7 +30,7 @@ struct MBR
     int mbr_tamano;
     time_t mbr_fecha_creacion;
     int mbr_disk_signature;
-    char disk_fit;
+    string disk_fit;
     Particion mbr_partition[4];
 };
 
@@ -76,6 +76,7 @@ cout<<"************************CREAR DISCO*************************"<<endl;
     mbr.mbr_tamano = tam;
     mbr.mbr_disk_signature = rand()%1000;
     mbr.mbr_fecha_creacion = time(0);
+    mbr.disk_fit = op.fit;
     for(int i = 0; i < 4; i++){
         mbr.mbr_partition[i].part_status = '0';
         mbr.mbr_partition[i].part_size = 0;
@@ -85,15 +86,13 @@ cout<<"************************CREAR DISCO*************************"<<endl;
     }
     cout<<"Disco nuevo :: "<<op.path<<"\nFecha de creacion: "<<asctime(gmtime(&mbr.mbr_fecha_creacion))<<endl;
     cout<<"Signature: "<<mbr.mbr_disk_signature <<endl;
-    cout<<"Tamaño: "<<mbr.mbr_tamano <<"Bytes"<<endl;
+    cout<<"Tamaño: "<<mbr.mbr_tamano <<" Bytes"<<endl;
     cout<<"Fit: " <<mbr.disk_fit <<endl;
     cout<<"************************DISCO CREADO*************************"<<endl;
     ///escritura del mbr
     fseek(file,0,SEEK_SET);
     fwrite(&mbr,sizeof(MBR),1,file);
     fclose(file);
-}
-void Comands(){
 }
 vector<string> Splitequals(string text){
     vector<string> lineSplit{};
@@ -171,6 +170,8 @@ int main(int argc, char const *argv[])
         string a = CastearMayuscula(CommandLine);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
         vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
         if(lineSplit[0]=="MKDISK"){
+            bool unit = false;
+            bool fit = false;
             for(size_t i=1; i < lineSplit.size();i++){
                 vector<string> aux;
                 aux = SplitEqual(lineSplit[i]);
@@ -179,15 +180,25 @@ int main(int argc, char const *argv[])
                 }
                 else if(aux[0]=="-F"){
                     Disk1.fit= aux[1];
+                    fit = true;
                 }
                 else if(aux[0]=="-U"){
                      Disk1.unit = aux[1];
+                     unit = true;
                 }
-                
                 else if(aux[0] == "-SIZE"){
                     Disk1.size = stof(aux[1]);
                 }
             }
+            if(fit==false){
+                cout<<"NO TRAIGO FIT"<<endl;
+                Disk1.fit = "FF";
+            }
+            if(unit==false){
+                cout<<"NO TRAIGO UNIDAD"<<endl;
+                Disk1.unit ="MB";
+            }
+            cout<<Disk1.fit<<endl;
             CrearDisco(Disk1);
         }
     } while (Comparar(CommandLine,CLOSE)!=0);
