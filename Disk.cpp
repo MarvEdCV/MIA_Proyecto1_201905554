@@ -44,7 +44,7 @@ struct DiscoD{ //estructura solo para tener la infomación de una entrada
 }
 Disk1;
 void CrearDisco(DiscoD op){
-cout<<"************************CREAR DISCO*************************"<<endl;
+cout<<"************************CREAR DISCO*************************\n"<<endl;
     string s = path + op.path;//url raiz + url de la entrada
     char sc[s.size() + 1];
     strcpy(sc, s.c_str());
@@ -88,21 +88,11 @@ cout<<"************************CREAR DISCO*************************"<<endl;
     cout<<"Signature: "<<mbr.mbr_disk_signature <<endl;
     cout<<"Tamaño: "<<mbr.mbr_tamano <<" Bytes"<<endl;
     cout<<"Fit: " <<mbr.disk_fit <<endl;
-    cout<<"************************DISCO CREADO*************************"<<endl;
+    cout<<"************************DISCO CREADO************************* \n"<<endl;
     ///escritura del mbr
     fseek(file,0,SEEK_SET);
     fwrite(&mbr,sizeof(MBR),1,file);
     fclose(file);
-}
-vector<string> Splitequals(string text){
-    vector<string> lineSplit{};
-    string space = " ";
-    size_t pos =0;
-    while ((pos = text.find(space)) != string::npos) {
-        lineSplit.push_back(text.substr(0, pos));
-        text.erase(0, pos + space.length());
-    }
-    return lineSplit;
 }
 
 /**
@@ -120,16 +110,21 @@ vector<string> SplitEqual(string p){
     return PositionSplit;
 
 }
+/**
+ * Funcion que recibe un string y splitea la cadena por espacios retorna un vector con lo spliteado
+ * */
 vector<string> SplitSpace(string text){
     vector<string> lineSplit{};
-    string space = " ";
-    size_t pos =0;
-    while ((pos = text.find(space)) != string::npos) {
-        lineSplit.push_back(text.substr(0, pos));
-        text.erase(0, pos + space.length());
+    string word;
+    stringstream sstream(text);
+    while (getline(sstream,word,' ')){
+        lineSplit.push_back(word);
     }
     return lineSplit;
 }
+/**
+ * Funcion utilizada para imprimir vectores spliteados(prueba nada mas)
+ * */
 void ImprimirVector(vector <string> vec){
     for (const auto &str : vec) {
         cout << str << endl;
@@ -147,6 +142,9 @@ int Comparar(char cad1[], char cad2[]){
     return resultado;
 
 }
+/**
+ * Funcion que convierte una cadena en mayusculas todas.
+ * */
 string CastearMayuscula(char cad1[]){
     int i;
     for ( i = 0; i < strlen(cad1); i++ )  {
@@ -154,21 +152,22 @@ string CastearMayuscula(char cad1[]){
 }
     return cad1;
 }
-
-
-
+/**
+ * FUNCION LOGICA PRINCIPAL
+ * */
 int main(int argc, char const *argv[])
 {
-    cout<<"*********HARD DISK SIMULATION*********"<<endl;
+    cout<<"*********HARD DISK SIMULATION********* \n"<<endl;
     char CommandLine[200];//maximo de tamanio estimado de una linea de comandos 200
     //PALABRAS RESERVADAS
-    char CLOSE[]="CLOSE";
+    string a;
     do
     {
-
+        cout<<"Command :: ";
         cin.getline(CommandLine,200,'\n');//Obtenemos la linea completa del comando
-        string a = CastearMayuscula(CommandLine);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
+        a = CastearMayuscula(CommandLine);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
         vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
+        
         if(lineSplit[0]=="MKDISK"){
             bool unit = false;
             bool fit = false;
@@ -191,17 +190,33 @@ int main(int argc, char const *argv[])
                 }
             }
             if(fit==false){
-                cout<<"NO TRAIGO FIT"<<endl;
                 Disk1.fit = "FF";
             }
             if(unit==false){
-                cout<<"NO TRAIGO UNIDAD"<<endl;
                 Disk1.unit ="MB";
             }
-            cout<<Disk1.fit<<endl;
             CrearDisco(Disk1);
         }
-    } while (Comparar(CommandLine,CLOSE)!=0);
+        if(lineSplit[0]=="RMDISK"){
+            vector<string> aux;
+            aux = SplitEqual(lineSplit[1]);
+            if(aux[0] == "-PATH"){
+                string auxiliar = aux[1];
+                if(remove(auxiliar.c_str())==0) // Eliminamos el archivo
+                {
+                    printf("El archivo fue eliminado satisfactoriamente\n");
+                }
+                else{
+                    printf("No se pudo eliminar el archivo\n");
+                    system("PAUSE");
+                }
+                    
+            }
+
+
+           
+        }
+    } while (CommandLine != "CLOSE ");
     
     return EXIT_SUCCESS;
 }
