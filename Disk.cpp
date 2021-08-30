@@ -37,7 +37,7 @@ struct MBR
     Particion mbr_partition[4];
 };
 
-string path="/home/eduardo/Escritorio/Archivos/Proyecto 1/MIA_Proyecto1_201905554"; //url raiz para guardar
+string path="."; //url raiz para guardar
 
 struct DiscoD{ //estructura solo para tener la infomación de una entrada
 	string path="";
@@ -173,6 +173,18 @@ string CastearMayuscula(char cad1[]){
 }
     return cad1;
 }
+
+void mkcarpetas(string entrada){
+    vector<string> aux2;
+    aux2 = Splitbarra(entrada);//Se crea un vector que esta spliteado por el simbolo / para poder crear las carpetas deseadas por si no existen.
+    string variable;//String que almacenara las carpetas a crear o creadas
+    for(size_t j=1; j<(aux2.size()-1); j++){//Ciclo que se recorre desde 1 hasta el tamanio del path menos 1 ya que la ultima posicion contiene el nombre deldisco  a crear, se empieza de 1 ya que la posicion 0 es posicion vacia que esta antes de el primer simboo /
+        variable =variable+aux2[j]+"/";
+        char sc[variable.size() + 1];
+        strcpy(sc,variable.c_str());//Casteamos el string a char ya que la funcion mkdir recibe una variable de tipo char* con la direccion del directorio a crear
+        mkdir(sc, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //creamos la carpeta recursivamene                       
+    }
+}
 /**
  * FUNCION LOGICA PRINCIPAL
  * */
@@ -192,19 +204,12 @@ int main(int argc, char const *argv[])
         if(lineSplit[0]=="MKDISK"){//Comparamos para saber que crearemos un disco con el comando MKDISK
             bool unit = false;
             bool fit = false;// Variables booleanas que se estableceran por defecto si no se declaran en el comando si son false se pondran en automatico por defecto segun enunciado
+            vector<string> aux;
             for(size_t i=1; i < lineSplit.size();i++){//Repetiremos tantas veces desde 1 hasta que termine cada uno de los comandos(se empieza de 1 ya que no tomamos en cuenta el comando MKDISK)
-                vector<string> aux;
+                
                 aux = SplitEqual(lineSplit[i]);//Spliteamos cada comando por el simbolo = para poder tomar el valor deseado en cada parametro
                 if(aux[0] == "-PATH"){//Si el comando es el -path entonces entrara a esta condicional
-                    vector<string> aux2;
-                    aux2 = Splitbarra(aux[1]);//Se crea un vector que esta spliteado por el simbolo / para poder crear las carpetas deseadas por si no existen.
-                    string variable;//String que almacenara las carpetas a crear o creadas
-                    for(size_t j=1; j<(aux2.size()-1); j++){//Ciclo que se recorre desde 1 hasta el tamanio del path menos 1 ya que la ultima posicion contiene el nombre deldisco  a crear, se empieza de 1 ya que la posicion 0 es posicion vacia que esta antes de el primer simboo /
-                        variable =variable+aux2[j]+"/";
-                        char sc[variable.size() + 1];
-                        strcpy(sc,variable.c_str());//Casteamos el string a char ya que la funcion mkdir recibe una variable de tipo char* con la direccion del directorio a crear
-                       mkdir(sc, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //creamos la carpeta recursivamene                       
-                    }
+                    mkcarpetas(aux[1]);
                      Disk1.path = aux[1];//Asignamos el path al disco
                 }
                 else if(aux[0]=="-F"){//Asignamos el fit al disco
@@ -231,8 +236,9 @@ int main(int argc, char const *argv[])
             vector<string> aux;
             aux = SplitEqual(lineSplit[1]);
             if(aux[0] == "-PATH"){
-                string auxiliar = aux[1];
-                if(remove(auxiliar.c_str())==0) // Eliminamos el archivo
+                string dir;
+                dir = "."+aux[1];
+                if(remove(dir.c_str())==0) // Eliminamos el archivo
                 {
                     printf("El archivo fue eliminado satisfactoriamente\n");
                 }
@@ -241,10 +247,7 @@ int main(int argc, char const *argv[])
                     system("PAUSE");
                 }
                     
-            }
-
-
-           
+            }           
         }
     } while (CommandLine != "CLOSE ");
     
