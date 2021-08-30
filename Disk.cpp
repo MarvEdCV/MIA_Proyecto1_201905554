@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+
 using namespace std;
 using std::cout; using std::cin;
 using std::endl; using std::string;
@@ -34,7 +37,7 @@ struct MBR
     Particion mbr_partition[4];
 };
 
-string path=""; //url raiz para guardar
+string path="/home/eduardo/Escritorio/Archivos/Proyecto 1/MIA_Proyecto1_201905554"; //url raiz para guardar
 
 struct DiscoD{ //estructura solo para tener la infomación de una entrada
 	string path="";
@@ -45,9 +48,13 @@ struct DiscoD{ //estructura solo para tener la infomación de una entrada
 Disk1;
 void CrearDisco(DiscoD op){
 cout<<"************************CREAR DISCO*************************\n"<<endl;
+    
     string s = path + op.path;//url raiz + url de la entrada
+    
     char sc[s.size() + 1];
+    
     strcpy(sc, s.c_str());
+    
     FILE *file=NULL;
     file=fopen(sc,"r"); //r= read = si el disco ya existia
     if(file!=NULL){
@@ -108,7 +115,20 @@ vector<string> SplitEqual(string p){
         PositionSplit.push_back(l);
     }
     return PositionSplit;
-
+}
+/**
+ * Funcion que retorna un vector spliteado por el simbolo / para poder sacar la ruta;
+ * */
+vector<string> Splitbarra(string p){
+    vector<string> PositionSplit{};
+    stringstream input_stringstream(p);
+    string l;
+    while (getline(input_stringstream,l, '/'))
+    {
+        //cout << "Un valor: " << l << endl;
+        PositionSplit.push_back(l);
+    }
+    return PositionSplit;
 }
 /**
  * Funcion que recibe un string y splitea la cadena por espacios retorna un vector con lo spliteado
@@ -122,6 +142,7 @@ vector<string> SplitSpace(string text){
     }
     return lineSplit;
 }
+
 /**
  * Funcion utilizada para imprimir vectores spliteados(prueba nada mas)
  * */
@@ -168,34 +189,43 @@ int main(int argc, char const *argv[])
         a = CastearMayuscula(CommandLine);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
         vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
         
-        if(lineSplit[0]=="MKDISK"){
+        if(lineSplit[0]=="MKDISK"){//Comparamos para saber que crearemos un disco con el comando MKDISK
             bool unit = false;
-            bool fit = false;
-            for(size_t i=1; i < lineSplit.size();i++){
+            bool fit = false;// Variables booleanas que se estableceran por defecto si no se declaran en el comando si son false se pondran en automatico por defecto segun enunciado
+            for(size_t i=1; i < lineSplit.size();i++){//Repetiremos tantas veces desde 1 hasta que termine cada uno de los comandos(se empieza de 1 ya que no tomamos en cuenta el comando MKDISK)
                 vector<string> aux;
-                aux = SplitEqual(lineSplit[i]);
-                if(aux[0] == "-PATH"){
-                     Disk1.path = aux[1];
+                aux = SplitEqual(lineSplit[i]);//Spliteamos cada comando por el simbolo = para poder tomar el valor deseado en cada parametro
+                if(aux[0] == "-PATH"){//Si el comando es el -path entonces entrara a esta condicional
+                    vector<string> aux2;
+                    aux2 = Splitbarra(aux[1]);//Se crea un vector que esta spliteado por el simbolo / para poder crear las carpetas deseadas por si no existen.
+                    string variable;//String que almacenara las carpetas a crear o creadas
+                    for(size_t j=1; j<(aux2.size()-1); j++){//Ciclo que se recorre desde 1 hasta el tamanio del path menos 1 ya que la ultima posicion contiene el nombre deldisco  a crear, se empieza de 1 ya que la posicion 0 es posicion vacia que esta antes de el primer simboo /
+                        variable =variable+aux2[j]+"/";
+                        char sc[variable.size() + 1];
+                        strcpy(sc,variable.c_str());//Casteamos el string a char ya que la funcion mkdir recibe una variable de tipo char* con la direccion del directorio a crear
+                       mkdir(sc, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //creamos la carpeta recursivamene                       
+                    }
+                     Disk1.path = aux[1];//Asignamos el path al disco
                 }
-                else if(aux[0]=="-F"){
+                else if(aux[0]=="-F"){//Asignamos el fit al disco
                     Disk1.fit= aux[1];
                     fit = true;
                 }
-                else if(aux[0]=="-U"){
+                else if(aux[0]=="-U"){//Asignamos la unidad al disco
                      Disk1.unit = aux[1];
                      unit = true;
                 }
-                else if(aux[0] == "-SIZE"){
+                else if(aux[0] == "-SIZE"){//Asignamos el tamanio al disco
                     Disk1.size = stof(aux[1]);
                 }
             }
-            if(fit==false){
+            if(fit==false){//Asignacion default
                 Disk1.fit = "FF";
             }
-            if(unit==false){
+            if(unit==false){//Asignacion default
                 Disk1.unit ="MB";
             }
-            CrearDisco(Disk1);
+            CrearDisco(Disk1);//Creamos disco
         }
         if(lineSplit[0]=="RMDISK"){
             vector<string> aux;
@@ -220,6 +250,5 @@ int main(int argc, char const *argv[])
     
     return EXIT_SUCCESS;
 }
-
 
 

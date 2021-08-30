@@ -4,6 +4,7 @@
         "ostream": "cpp",
         "random": "cpp",
         "*.tcc": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "filesystem": "cpp"
     }
 }
