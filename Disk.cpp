@@ -12,12 +12,16 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
-
+#include <fcntl.h>
+#include <unistd.h>
+#include <fstream>
 using namespace std;
 using std::cout; using std::cin;
 using std::endl; using std::string;
 using std::vector; using std::istringstream;
 using std::stringstream;
+
+void ejecutarcomandos(char comando[200]);
 ////ESTRUCTURAS////
 struct Particion
 {
@@ -185,73 +189,114 @@ void mkcarpetas(string entrada){
         mkdir(sc, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //creamos la carpeta recursivamene                       
     }
 }
+
+void ejecutarcomandos(char comando[200]){
+    if(comando[0]!='#'){//Validación por si viene comentario al iniciar la linea 
+        for(int i = 0;i<200;i++){
+            if(comando[i]=='#'){//Validación si viene comentario al final de la linea
+                memcpy(comando,comando,i);//copiamos la linea del comando, pero hasta antes de el comentario.
+            }
+        }
+        string a;
+        a = CastearMayuscula(comando);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
+        vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
+            if(lineSplit[0]=="MKDISK"){//Comparamos para saber que crearemos un disco con el comando MKDISK
+                bool unit = false;
+                bool fit = false;// Variables booleanas que se estableceran por defecto si no se declaran en el comando si son false se pondran en automatico por defecto segun enunciado
+                vector<string> aux;
+                for(size_t i=1; i < lineSplit.size();i++){//Repetiremos tantas veces desde 1 hasta que termine cada uno de los comandos(se empieza de 1 ya que no tomamos en cuenta el comando MKDISK)
+                    
+                    aux = SplitEqual(lineSplit[i]);//Spliteamos cada comando por el simbolo = para poder tomar el valor deseado en cada parametro
+                    if(aux[0] == "-PATH"){//Si el comando es el -path entonces entrara a esta condicional
+                        mkcarpetas(aux[1]);
+                        Disk1.path = aux[1];//Asignamos el path al disco
+                    }
+                    else if(aux[0]=="-F"){//Asignamos el fit al disco
+                        Disk1.fit= aux[1];
+                        fit = true;
+                    }
+                    else if(aux[0]=="-U"){//Asignamos la unidad al disco
+                        Disk1.unit = aux[1];
+                        unit = true;
+                    }
+                    else if(aux[0] == "-SIZE"){//Asignamos el tamanio al disco
+                        Disk1.size = stof(aux[1]);
+                    }
+                }
+                if(fit==false){//Asignacion default
+                    Disk1.fit = "FF";
+                }
+                if(unit==false){//Asignacion default
+                    Disk1.unit ="MB";
+                }
+                CrearDisco(Disk1);//Creamos disco
+            }
+            if(lineSplit[0]=="RMDISK"){
+                vector<string> aux;
+                aux = SplitEqual(lineSplit[1]);
+                if(aux[0] == "-PATH"){
+                    string dir;
+                    dir = "."+aux[1];
+                    if(remove(dir.c_str())==0) // Eliminamos el archivo
+                    {
+                        printf("El archivo fue eliminado satisfactoriamente\n");
+                    }
+                    else{
+                        printf("No se pudo eliminar el archivo\n");
+                        system("PAUSE");
+                    }
+                        
+                }           
+            }
+        }
+}
+void leerscript(string ruta){
+    FILE *script;
+    if((script = fopen(ruta.c_str(),"r"))){
+        char line[200]="";
+        memset(line,0,sizeof(line));
+        while(fgets(line,sizeof line,script)){
+            if(line[0]!='\n'){
+                cout << line << endl;
+                ejecutarcomandos(line);
+            }
+            memset(line,0,sizeof(line));
+        }
+        fclose(script);
+    }else{
+        cout << "Error al abrir el SCRIPT" << endl;
+    }    
+}
 /**
  * FUNCION LOGICA PRINCIPAL
  * */
 int main(int argc, char const *argv[])
 {
-    cout<<"*********HARD DISK SIMULATION********* \n"<<endl;
+        cout<<"*********HARD DISK SIMULATION********* \n"<<endl;
     char CommandLine[200];//maximo de tamanio estimado de una linea de comandos 200
     //PALABRAS RESERVADAS
+    
     string a;
-    do
-    {
+    while ((string)CommandLine != "CLOSE"){
         cout<<"Command :: ";
         cin.getline(CommandLine,200,'\n');//Obtenemos la linea completa del comando
-        a = CastearMayuscula(CommandLine);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
-        vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
+        string temporal;
+        temporal = CastearMayuscula(CommandLine);
+        vector<string> ls = SplitSpace(temporal);
+        if(ls[0]=="EXEC"){
+            vector<string> aux;
+            aux = SplitEqual(ls[1]);
+            if(aux[0]=="-PATH"){
+                string ruta;
+                ruta = "."+aux[1];
+                leerscript(ruta);
+            }
+        }else{
+            ejecutarcomandos(CommandLine);
+        }
         
-        if(lineSplit[0]=="MKDISK"){//Comparamos para saber que crearemos un disco con el comando MKDISK
-            bool unit = false;
-            bool fit = false;// Variables booleanas que se estableceran por defecto si no se declaran en el comando si son false se pondran en automatico por defecto segun enunciado
-            vector<string> aux;
-            for(size_t i=1; i < lineSplit.size();i++){//Repetiremos tantas veces desde 1 hasta que termine cada uno de los comandos(se empieza de 1 ya que no tomamos en cuenta el comando MKDISK)
-                
-                aux = SplitEqual(lineSplit[i]);//Spliteamos cada comando por el simbolo = para poder tomar el valor deseado en cada parametro
-                if(aux[0] == "-PATH"){//Si el comando es el -path entonces entrara a esta condicional
-                    mkcarpetas(aux[1]);
-                     Disk1.path = aux[1];//Asignamos el path al disco
-                }
-                else if(aux[0]=="-F"){//Asignamos el fit al disco
-                    Disk1.fit= aux[1];
-                    fit = true;
-                }
-                else if(aux[0]=="-U"){//Asignamos la unidad al disco
-                     Disk1.unit = aux[1];
-                     unit = true;
-                }
-                else if(aux[0] == "-SIZE"){//Asignamos el tamanio al disco
-                    Disk1.size = stof(aux[1]);
-                }
-            }
-            if(fit==false){//Asignacion default
-                Disk1.fit = "FF";
-            }
-            if(unit==false){//Asignacion default
-                Disk1.unit ="MB";
-            }
-            CrearDisco(Disk1);//Creamos disco
-        }
-        if(lineSplit[0]=="RMDISK"){
-            vector<string> aux;
-            aux = SplitEqual(lineSplit[1]);
-            if(aux[0] == "-PATH"){
-                string dir;
-                dir = "."+aux[1];
-                if(remove(dir.c_str())==0) // Eliminamos el archivo
-                {
-                    printf("El archivo fue eliminado satisfactoriamente\n");
-                }
-                else{
-                    printf("No se pudo eliminar el archivo\n");
-                    system("PAUSE");
-                }
-                    
-            }           
-        }
-    } while (CommandLine != "CLOSE ");
+
+    }
     
     return EXIT_SUCCESS;
 }
-
-
