@@ -22,6 +22,7 @@ using std::vector; using std::istringstream;
 using std::stringstream;
 
 void ejecutarcomandos(char comando[200]);
+void borrardisco(string);
 ////ESTRUCTURAS////
 struct Particion
 {
@@ -41,7 +42,7 @@ struct MBR
     Particion mbr_partition[4];
 };
 
-string path="."; //url raiz para guardar
+string path="/home/eduardo/Escritorio/Archivos/Proyecto 1/MIA_Proyecto1_201905554"; //url raiz para guardar
 
 struct DiscoD{ //estructura solo para tener la infomación de una entrada
 	string path="";
@@ -199,13 +200,19 @@ void ejecutarcomandos(char comando[200]){
         }
         string a;
         a = CastearMayuscula(comando);//Casteamos todo a mayusculas para trabajarlo internamente porque pueden venir mayusculas y minusculas
+        int aa = strncmp(comando,"PAUSE",5);
+        if(aa==0){
+            int pause;
+            cout<<"Script pausado!\n"<<"Presione Enter para continuar\n";
+            //pausamos
+            pause = cin.get();
+        }
         vector<string> lineSplit = SplitSpace(a);//Spliteamos por espacios
             if(lineSplit[0]=="MKDISK"){//Comparamos para saber que crearemos un disco con el comando MKDISK
                 bool unit = false;
                 bool fit = false;// Variables booleanas que se estableceran por defecto si no se declaran en el comando si son false se pondran en automatico por defecto segun enunciado
                 vector<string> aux;
                 for(size_t i=1; i < lineSplit.size();i++){//Repetiremos tantas veces desde 1 hasta que termine cada uno de los comandos(se empieza de 1 ya que no tomamos en cuenta el comando MKDISK)
-                    
                     aux = SplitEqual(lineSplit[i]);//Spliteamos cada comando por el simbolo = para poder tomar el valor deseado en cada parametro
                     if(aux[0] == "-PATH"){//Si el comando es el -path entonces entrara a esta condicional
                         mkcarpetas(aux[1]);
@@ -232,25 +239,32 @@ void ejecutarcomandos(char comando[200]){
                 CrearDisco(Disk1);//Creamos disco
             }
             if(lineSplit[0]=="RMDISK"){
+                string dir;
                 vector<string> aux;
                 aux = SplitEqual(lineSplit[1]);
                 if(aux[0] == "-PATH"){
-                    string dir;
-                    dir = "."+aux[1];
-                    if(remove(dir.c_str())==0) // Eliminamos el archivo
-                    {
-                        printf("El archivo fue eliminado satisfactoriamente\n");
-                    }
-                    else{
-                        printf("No se pudo eliminar el archivo\n");
-                        system("PAUSE");
-                    }
-                        
+                
+                    dir = path+aux[1];
+                    cout<<dir<<endl;
+                    cout<<dir.size()<<endl;
+                    borrardisco(dir);
+                    
                 }           
             }
         }
 }
+void borrardisco(string ruta){
+    if(remove(ruta.c_str())==0) // Eliminamos el archivo
+    {
+        cout<<"El archivo fue eliminado satisfactoriamente\n"<<endl;
+    }
+    else{
+        cout<<"No se pudo eliminar el archivo\n"<<endl;
+    }
+}
+
 void leerscript(string ruta){
+    vector<string> lineas;
     FILE *script;
     if((script = fopen(ruta.c_str(),"r"))){
         char line[200]="";
@@ -258,6 +272,7 @@ void leerscript(string ruta){
         while(fgets(line,sizeof line,script)){
             if(line[0]!='\n'){
                 cout << line << endl;
+                lineas.push_back(line);
                 ejecutarcomandos(line);
             }
             memset(line,0,sizeof(line));
@@ -275,7 +290,6 @@ int main(int argc, char const *argv[])
         cout<<"*********HARD DISK SIMULATION********* \n"<<endl;
     char CommandLine[200];//maximo de tamanio estimado de una linea de comandos 200
     //PALABRAS RESERVADAS
-    
     string a;
     while ((string)CommandLine != "CLOSE"){
         cout<<"Command :: ";
@@ -288,7 +302,7 @@ int main(int argc, char const *argv[])
             aux = SplitEqual(ls[1]);
             if(aux[0]=="-PATH"){
                 string ruta;
-                ruta = "."+aux[1];
+                ruta = path+aux[1];
                 leerscript(ruta);
             }
         }else{
